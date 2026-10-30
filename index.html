@@ -1748,6 +1748,159 @@ updateGameDisplay();
 console.log("RELIC HUNTERS 0.4 – katalog aktivní");
 </script>
 
+<script>
+// ======================================
+// RELIC HUNTERS 0.5
+// SYSTÉM ODZNAKŮ
+// ======================================
+
+gameData.badges = Array.isArray(gameData.badges)
+  ? gameData.badges
+  : [];
+
+const hunterBadges = [
+  {
+    id: "first",
+    icon: "🏅",
+    name: "První objev",
+    description: "Najdi svou první relikvii.",
+    condition: () => gameData.inventory.length >= 1
+  },
+  {
+    id: "collector",
+    icon: "🎒",
+    name: "Sběratel",
+    description: "Najdi celkem pět relikvií.",
+    condition: () => gameData.inventory.length >= 5
+  },
+  {
+    id: "rare",
+    icon: "💎",
+    name: "Vzácný nález",
+    description: "Objev vzácný nebo lepší artefakt.",
+    condition: () => gameData.inventory.some(item =>
+      /vzac|epic|epick|legend|myth|mytick/i.test(item.rarity || "")
+    )
+  },
+  {
+    id: "complete",
+    icon: "📚",
+    name: "Mistr katalogu",
+    description: "Objev všechny druhy relikvií.",
+    condition: () => {
+      const found = new Set(
+        gameData.inventory.map(item => item.name)
+      );
+      return relicTypes.every(type => found.has(type.name));
+    }
+  },
+  {
+    id: "legend",
+    icon: "👑",
+    name: "Lovec legend",
+    description: "Najdi legendární nebo mytickou relikvii.",
+    condition: () => gameData.inventory.some(item =>
+      /legend|myth|mytick/i.test(item.rarity || "")
+    )
+  }
+];
+
+// Vyhodnocení úspěchů
+function checkHunterBadges() {
+  let newBadge = false;
+
+  hunterBadges.forEach(badge => {
+    if (
+      !gameData.badges.includes(badge.id) &&
+      badge.condition()
+    ) {
+      gameData.badges.push(badge.id);
+      newBadge = true;
+
+      alert(
+        "🏆 NOVÝ ODZNAK!\n\n" +
+        badge.icon + " " + badge.name + "\n" +
+        badge.description
+      );
+    }
+  });
+
+  if (newBadge) saveGame();
+}
+
+// Zobrazení odznaků v profilu
+function renderHunterBadges() {
+  const profile = document.getElementById("profile");
+  if (!profile) return;
+
+  let section = document.getElementById("hunterBadges");
+
+  if (!section) {
+    section = document.createElement("div");
+    section.id = "hunterBadges";
+    section.style.cssText =
+      "margin:20px 0;padding:16px;background:#fffdf2;border-radius:16px;";
+    profile.appendChild(section);
+  }
+
+  section.innerHTML = `
+    <h3 style="color:#31566e">🏆 ODZNAKY LOVCE</h3>
+    <p style="color:#718894;font-size:13px">
+      Získáno ${gameData.badges.length} / ${hunterBadges.length}
+    </p>
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    ">
+      ${hunterBadges.map(badge => {
+        const earned = gameData.badges.includes(badge.id);
+
+        return `
+          <div style="
+            padding:12px;
+            border-radius:12px;
+            background:${earned ? "#fff0c5" : "#e9eef0"};
+            border:1px solid ${earned ? "#dfb64e" : "#d8e0e4"};
+            opacity:${earned ? "1" : ".55"};
+          ">
+            <div style="font-size:29px">
+              ${earned ? badge.icon : "🔒"}
+            </div>
+            <b style="font-size:12px">
+              ${badge.name}
+            </b>
+            <p style="font-size:10px;margin:5px 0 0">
+              ${badge.description}
+            </p>
+            <small>
+              ${earned ? "ZÍSKÁNO" : "NEZÍSKÁNO"}
+            </small>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// Napojení na existující získávání relikvií
+const originalCollectRelic05 = collectRelic;
+
+collectRelic = function(relic) {
+  originalCollectRelic05(relic);
+  checkHunterBadges();
+  renderHunterBadges();
+};
+
+// Kontrola dosavadního postupu
+checkHunterBadges();
+renderHunterBadges();
+
+console.log("RELIC HUNTERS 0.5 – ODZNAKY AKTIVNÍ");
+</script>
+</body>
+</html>
+
 </body>
 </html>
 
