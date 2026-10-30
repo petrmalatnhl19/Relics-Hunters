@@ -1511,5 +1511,243 @@ console.log("RELIC HUNTERS – verze 0.3 připravena.");
 </body>
 </html>
 
+
+<style>
+/* RELIC HUNTERS 0.4 – KATALOG */
+#relicCatalog {
+  margin-top: 20px;
+}
+.catalog-title {
+  color: #31566e;
+  margin: 18px 0 10px;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+.catalog-card {
+  background: white;
+  border-radius: 15px;
+  padding: 13px;
+  border: 2px solid #e1eaf0;
+  box-shadow: 0 3px 9px #34566b12;
+  min-height: 125px;
+}
+.catalog-card.found {
+  border-color: #e4bd69;
+}
+.catalog-card .symbol {
+  font-size: 30px;
+}
+.catalog-card strong {
+  display: block;
+  margin: 6px 0;
+  font-size: 12px;
+}
+.catalog-card small {
+  font-size: 10px;
+  color: #718894;
+}
+.catalog-card.unknown {
+  opacity: .65;
+  background: #edf2f4;
+}
+.relic-detail {
+  text-align: left;
+  background: #edf6f9;
+  border-radius: 12px;
+  padding: 13px;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+.catalog-progress {
+  background: #e5f1f5;
+  border-radius: 12px;
+  padding: 13px;
+  margin-bottom: 13px;
+  color: #31566e;
+  font-size: 13px;
+}
+</style>
+
+<script>
+// ======================================
+// RELIC HUNTERS 0.4
+// KATALOG A SBĚRATELSKÝ SYSTÉM
+// ======================================
+
+const relicLore = {
+  "Měděný peníz": {
+    description: "Starý peníz poutníka, který kdysi putoval zapomenutými cestami.",
+    story: "Říká se, že každý, kdo ho najde, právě zahájil vlastní dobrodružství."
+  },
+  "Mechový talisman": {
+    description: "Zelený talisman pokrytý jemným lesním mechem.",
+    story: "Jeho původ sahá do dob, kdy lesy střežili dávní strážci."
+  },
+  "Runový prsten": {
+    description: "Prsten s runami, jejichž význam dosud nikdo nerozluštil.",
+    story: "Legenda tvrdí, že prsten patřil jednomu z prvních lovců relikvií."
+  },
+  "Krystal rosy": {
+    description: "Průzračný krystal, který zachycuje světlo jako ranní rosa.",
+    story: "Podle pověstí vznikl při prvním východu slunce nad starým královstvím."
+  },
+  "Koruna větrů": {
+    description: "Vzácná koruna spojená se čtyřmi živly.",
+    story: "Její nositel měl podle legendy rozumět řeči větru."
+  },
+  "Slza dračího měsíce": {
+    description: "Mýtický drahokam, o jehož existenci se dlouho pochybovalo.",
+    story: "Vypráví se, že se objeví jen tomu, kdo má mimořádné štěstí."
+  }
+};
+
+// Doplnění příběhů do šesti existujících druhů
+relicTypes.forEach(type => {
+  const lore = relicLore[type.name];
+  if (lore) {
+    type.description = lore.description;
+    type.story = lore.story;
+  }
+});
+
+// Původní získávání relikvií ponecháme,
+// pouze doplníme příběhové údaje do záznamu.
+const originalCollectRelic = collectRelic;
+
+collectRelic = function(relic) {
+  const previousCount = gameData.inventory.length;
+
+  originalCollectRelic(relic);
+
+  if (gameData.inventory.length > previousCount) {
+    const item = gameData.inventory[gameData.inventory.length - 1];
+    const lore = relicLore[item.name];
+
+    if (lore) {
+      item.description = lore.description;
+      item.story = lore.story;
+    }
+
+    saveGame();
+    updateGameDisplay();
+  }
+};
+
+// Podrobnosti nalezeného artefaktu
+function showRelicDetails(item) {
+  const lore = relicLore[item.name] || {};
+
+  document.getElementById("modalIcon").textContent =
+    item.icon || "💎";
+
+  document.getElementById("modalTitle").textContent =
+    item.name;
+
+  document.getElementById("modalDesc").textContent =
+    item.rarity + " · " + (item.xp || 0) + " XP";
+
+  document.getElementById("challengeArea").innerHTML = `
+    <div class="relic-detail">
+      <b>📖 O artefaktu</b>
+      <p>${escapeText(item.description || lore.description || "Tajemný artefakt.")}</p>
+      <b>✨ Legenda</b>
+      <p>${escapeText(item.story || lore.story || "Jeho příběh zatím není znám.")}</p>
+      <small>Nalezeno: ${
+        item.date
+          ? new Date(item.date).toLocaleDateString("cs-CZ")
+          : "Neznámé datum"
+      }</small>
+    </div>
+  `;
+
+  document.getElementById("feedback").textContent =
+    "Součást tvé sbírky.";
+
+  document.getElementById("modal").classList.add("show");
+}
+
+// Katalog všech šesti artefaktů
+function renderRelicCatalog() {
+  let catalog = document.getElementById("relicCatalog");
+
+  if (!catalog) {
+    catalog = document.createElement("div");
+    catalog.id = "relicCatalog";
+
+    document.getElementById("inventoryGrid")
+      .after(catalog);
+  }
+
+  const unique = new Set(
+    gameData.inventory.map(item => item.name)
+  );
+
+  catalog.innerHTML = `
+    <h3 class="catalog-title">📚 KATALOG ARTEFAKTŮ</h3>
+
+    <div class="catalog-progress">
+      <b>Objeveno ${unique.size} / ${relicTypes.length} druhů</b>
+      <p>Každý artefakt má svůj vlastní příběh.</p>
+    </div>
+
+    <div class="catalog-grid">
+      ${relicTypes.map(type => {
+        const found = unique.has(type.name);
+
+        return `
+          <div class="catalog-card ${found ? "found" : "unknown"}">
+            <div class="symbol">${found ? type.icon : "❔"}</div>
+            <strong>${found ? escapeText(type.name) : "Neobjevený artefakt"}</strong>
+            <small>${found ? escapeText(type.rarity) : "Dosud nenalezeno"}</small>
+            ${found ? `<small style="display:block;margin-top:5px">+${type.xp} XP</small>` : ""}
+          </div>
+        `;
+      }).join("")}
+    </div>
+
+    ${
+      unique.size === relicTypes.length
+        ? `<div class="catalog-progress" style="margin-top:12px">
+             🏆 GRATULUJEME! Objevil jsi všech šest druhů relikvií!
+           </div>`
+        : ""
+    }
+  `;
+}
+
+// Rozšíření inventáře o příběhy
+const originalRenderInventory = renderInventory;
+
+renderInventory = function() {
+  originalRenderInventory();
+
+  const grid = document.getElementById("inventoryGrid");
+
+  grid.querySelectorAll(".relic-card").forEach((card, index) => {
+    const item = gameData.inventory
+      .slice()
+      .reverse()[index];
+
+    if (!item) return;
+
+    card.style.cursor = "pointer";
+    card.title = "Otevřít podrobnosti";
+
+    card.onclick = () => showRelicDetails(item);
+  });
+
+  renderRelicCatalog();
+};
+
+// Aktualizace
+updateGameDisplay();
+
+console.log("RELIC HUNTERS 0.4 – katalog aktivní");
+</script>
+
 </body>
 </html>
+
