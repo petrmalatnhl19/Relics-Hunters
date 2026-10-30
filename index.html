@@ -2055,6 +2055,268 @@ console.log("RELIC HUNTERS 0.5 – ODZNAKY AKTIVNÍ");
 </body>
 </html>
 
+<script>
+// ==========================================
+// RELIC HUNTERS 0.6 – TAJEMNÉ PORTÁLY
+// ==========================================
+
+gameData.portalDate = gameData.portalDate || "";
+gameData.portalFragments = Number(gameData.portalFragments || 0);
+
+const portalQuestions = [
+  {
+    question: "Který živel představuje plamen?",
+    answers: ["Voda", "Oheň", "Vítr"],
+    correct: 1
+  },
+  {
+    question: "Co nejlépe symbolizuje moudrost?",
+    answers: ["Sova", "Vlk", "Drak"],
+    correct: 0
+  },
+  {
+    question: "Který kov je spojován se stříbrnou barvou?",
+    answers: ["Měď", "Zlato", "Stříbro"],
+    correct: 2
+  },
+  {
+    question: "Který živel představuje bouře?",
+    answers: ["Blesk", "Země", "Led"],
+    correct: 0
+  },
+  {
+    question: "Co je podle legendy fénix?",
+    answers: ["Mořská příšera", "Ohnivý pták", "Lesní obr"],
+    correct: 1
+  }
+];
+
+function getPortalToday() {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function portalAlreadyCompleted() {
+  return gameData.portalDate === getPortalToday();
+}
+
+// Tlačítko portálu na mapě
+function createPortalButton() {
+  const tools = document.getElementById("mapTools");
+
+  if (!tools || document.getElementById("portalButton")) return;
+
+  const button = document.createElement("button");
+  button.id = "portalButton";
+  button.innerHTML = "🌌";
+  button.title = "Tajemný portál";
+
+  button.style.cssText = `
+    width:58px;
+    height:58px;
+    border:3px solid #d8b4ff;
+    border-radius:18px;
+    background:linear-gradient(145deg,#713ac5,#32165e);
+    color:white;
+    font-size:28px;
+    margin-top:10px;
+    box-shadow:0 4px 14px #44207866;
+    cursor:pointer;
+  `;
+
+  button.addEventListener("click", openPortal);
+  tools.appendChild(button);
+}
+
+// Otevření portálu
+function openPortal() {
+  const icon = document.getElementById("modalIcon");
+  const title = document.getElementById("modalTitle");
+  const desc = document.getElementById("modalDesc");
+  const area = document.getElementById("challengeArea");
+  const feedback = document.getElementById("feedback");
+  const modal = document.getElementById("modal");
+
+  icon.textContent = "🌌";
+  title.textContent = "Tajemný portál";
+
+  if (portalAlreadyCompleted()) {
+    desc.textContent = "Portál dnes již vydal svou energii.";
+
+    area.innerHTML = `
+      <div style="padding:18px;background:#eee5ff;border-radius:14px">
+        <h3>✨ Portál je uzavřen</h3>
+        <p>Dnešní výzvu už máš splněnou.</p>
+        <p>Celkem fragmentů: <b>${gameData.portalFragments}</b></p>
+        <p>Vrať se zítra a zkus další runovou zkoušku.</p>
+      </div>
+    `;
+
+    feedback.textContent = "Další výzva bude dostupná nový den.";
+    modal.classList.add("show");
+    return;
+  }
+
+  desc.textContent = "Portál tě vyzývá k rozluštění run.";
+
+  const question = portalQuestions[
+    Math.floor(Math.random() * portalQuestions.length)
+  ];
+
+  area.innerHTML = `
+    <div style="
+      background:#eee5ff;
+      color:#38205b;
+      padding:16px;
+      border-radius:14px;
+    ">
+      <div style="font-size:38px">🔮</div>
+      <h3>${question.question}</h3>
+
+      <div id="portalAnswers" style="
+        display:grid;
+        gap:9px;
+        margin-top:15px;
+      ">
+        ${question.answers.map((answer, index) => `
+          <button
+            data-answer="${index}"
+            style="
+              padding:13px;
+              border:2px solid #bda1e5;
+              border-radius:12px;
+              background:white;
+              color:#38205b;
+              font-weight:bold;
+              font-size:14px;
+            "
+          >${answer}</button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  feedback.textContent = "Správná odpověď otevře portál.";
+
+  area.querySelectorAll("[data-answer]").forEach(button => {
+    button.addEventListener("click", () => {
+      const answer = Number(button.dataset.answer);
+
+      if (answer !== question.correct) {
+        feedback.textContent = "Runy nesouhlasí. Zkus to znovu.";
+        return;
+      }
+
+      gameData.portalDate = getPortalToday();
+      gameData.portalFragments += 1;
+
+      addXP(75);
+      saveGame();
+
+      desc.textContent = "Portál ti předal svou energii!";
+
+      area.innerHTML = `
+        <div style="
+          padding:20px;
+          text-align:center;
+          background:#eee5ff;
+          color:#38205b;
+          border-radius:14px;
+        ">
+          <div style="font-size:55px">💠</div>
+          <h2>PORTÁL OTEVŘEN!</h2>
+          <p>Získáváš:</p>
+          <h3>+75 XP</h3>
+          <h3>+1 magický fragment</h3>
+          <p>Celkem fragmentů: ${gameData.portalFragments}</p>
+        </div>
+      `;
+
+      feedback.textContent = "Výzva splněna!";
+
+      updateGameDisplay();
+      renderPortalProfile();
+    });
+  });
+
+  modal.classList.add("show");
+}
+
+// Informace v profilu
+function renderPortalProfile() {
+  const profile = document.getElementById("profile");
+  if (!profile) return;
+
+  let panel = document.getElementById("portalProfile");
+
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "portalProfile";
+
+    panel.style.cssText = `
+      margin:18px 0;
+      padding:17px;
+      background:linear-gradient(135deg,#35205d,#7953a8);
+      color:white;
+      border-radius:17px;
+      text-align:center;
+    `;
+
+    profile.appendChild(panel);
+  }
+
+  panel.innerHTML = `
+    <div style="font-size:35px">🌌</div>
+    <h3>MAGICKÉ FRAGMENTY</h3>
+    <div style="font-size:30px;font-weight:bold">
+      ${gameData.portalFragments} 💠
+    </div>
+    <p style="font-size:12px">
+      ${portalAlreadyCompleted()
+        ? "Dnešní portál již byl dokončen."
+        : "Dnešní portál čeká na tvé objevení."}
+    </p>
+  `;
+}
+
+// Doplnění do profilu při jeho otevření
+const previousOpenPage06 = openPage;
+
+openPage = function(page) {
+  previousOpenPage06(page);
+
+  if (page === "profile") {
+    renderPortalProfile();
+  }
+};
+
+// Start
+createPortalButton();
+renderPortalProfile();
+saveGame();
+
+console.log("RELIC HUNTERS 0.6 – PORTÁLY AKTIVNÍ");
+</script>
+</body>
+</html>
+```
+
+### Co otestovat
+
+1. Otevři mapu a najdi nové fialové tlačítko 🌌.
+2. Klepni na něj.
+3. Vyřeš runovou otázku.
+4. Zkontroluj, že dostaneš 75 XP a jeden fragment.
+5. Otevři Profil a zkontroluj počet fragmentů.
+6. Obnov stránku a ověř, že fragment zůstal uložený.
+
+<badge color="success">Cíl verze 0.6</badge> Magické fragmenty a denní portál.
+
+Až to nahraješ, ověříme funkčnost. Potom můžeme vytvořit **0.7 – skutečné fantasy události na mapě**, s vlastními příšerami, příběhem a odměnami.
 </body>
 </html>
 
