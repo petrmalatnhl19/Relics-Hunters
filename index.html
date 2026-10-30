@@ -3,222 +3,687 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#172219">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RELIC HUNTERS</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#111a14;color:#eee;font-family:Arial,sans-serif}
-header{text-align:center;padding:25px;background:#1e3023;border-bottom:2px solid #bd9b51}
-h1{color:#e4c477;letter-spacing:4px;margin:0;font-family:Georgia}
-header p{color:#b7c2b3;font-size:12px}
-main{max-width:650px;margin:auto;padding:15px}
-.card{background:#202d23;border:1px solid #435443;border-radius:14px;padding:16px;margin:12px 0}
-h2{color:#e4c477;font-family:Georgia}
-button,.upload{background:#c9a85e;color:#191b13;border:0;border-radius:9px;padding:12px;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.4}
-nav{display:flex;gap:7px}
-nav button{flex:1;background:#344638;color:white}
-nav button.active{background:#c9a85e;color:#171a12}
-.page{display:none}.page.active{display:block}
-.quest{display:flex;gap:12px;align-items:center}
-.quest div{flex:1}
-.quest button{min-width:85px}
-small{color:#aebbad}
-.stats{display:flex;justify-content:space-around;text-align:center}
-.stats strong{display:block;color:#e4c477;font-size:22px}
-#preview{width:100%;max-height:300px;object-fit:contain;border-radius:10px;margin-top:12px}
-.items{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.item{background:#29392c;padding:12px;border-radius:12px;border:1px solid #53634c}
-.item img{width:100%;height:110px;object-fit:cover;border-radius:8px}
-.common{color:#c5c5c5}.uncommon{color:#8fd38b}.rare{color:#77baff}
-.epic{color:#d39aff}.legendary{color:#ffc45d}.mythic{color:#ff8d9d}
-input{max-width:100%}
+:root {
+  --gold: #d7ae59;
+  --dark: #111a17;
+  --panel: #1c2923;
+  --green: #8da77c;
+  --text: #f1eadb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--dark);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+header {
+  padding: 15px;
+  text-align: center;
+  background: linear-gradient(120deg,#17251e,#293b2d);
+  border-bottom: 2px solid var(--gold);
+}
+h1 {
+  margin: 0;
+  color: var(--gold);
+  letter-spacing: 3px;
+  font-size: 23px;
+}
+.subtitle {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #b7c4ad;
+  letter-spacing: 2px;
+}
+main {
+  max-width: 850px;
+  margin: auto;
+  padding: 12px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid #3c5143;
+  border-radius: 12px;
+  padding: 13px;
+  margin-bottom: 12px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.level {
+  color: var(--gold);
+  font-weight: bold;
+}
+.xpbar {
+  height: 11px;
+  background: #39473d;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 9px;
+}
+.xpfill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#9b7131,#f2d27e);
+  transition: width .3s;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-top: 12px;
+  text-align: center;
+}
+.stat {
+  background: #111c17;
+  padding: 9px 4px;
+  border-radius: 8px;
+}
+.stat strong {
+  display: block;
+  color: var(--gold);
+  font-size: 19px;
+}
+.stat small { color: #b9c4b9; }
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.primary {
+  background: var(--gold);
+  color: #211b10;
+}
+.secondary {
+  background: #344b3b;
+  color: white;
+}
+button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+#map {
+  width: 100%;
+  height: 390px;
+  border-radius: 10px;
+  border: 2px solid #52634d;
+  z-index: 1;
+}
+.map-note {
+  font-size: 12px;
+  color: #b9c4b9;
+  margin-top: 9px;
+  line-height: 1.5;
+}
+.status {
+  font-size: 13px;
+  color: #c6d2bf;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+.section-title {
+  color: var(--gold);
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #39483e;
+  padding: 9px 0;
+  gap: 8px;
+}
+.inventory-item:last-child { border: 0; }
+.rarity {
+  font-size: 11px;
+  color: var(--gold);
+}
+#modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: #000c;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.modal-card {
+  background: #1c2923;
+  border: 2px solid var(--gold);
+  border-radius: 15px;
+  padding: 22px;
+  width: 100%;
+  max-width: 390px;
+  text-align: center;
+}
+.rune-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin: 20px 0;
+}
+.rune {
+  font-size: 29px;
+  padding: 17px 5px;
+  background: #344b3b;
+  color: white;
+  border: 1px solid #64795e;
+}
+.rune:active { background: var(--gold); }
+#message {
+  min-height: 24px;
+  color: var(--gold);
+  font-size: 13px;
+}
+.leaflet-popup-content-wrapper {
+  background: #1c2923;
+  color: white;
+}
+.leaflet-popup-tip { background: #1c2923; }
+.leaflet-control-attribution { font-size: 9px !important; }
+footer {
+  text-align: center;
+  color: #829083;
+  font-size: 11px;
+  padding: 15px;
+}
 </style>
 </head>
+
 <body>
 <header>
-<h1>RELIC HUNTERS</h1>
-<p>THE WORLD IS YOUR TREASURE</p>
+  <h1>RELIC HUNTERS</h1>
+  <div class="subtitle">VYDEJ SE ZA TAJEMSTVÍM SVĚTA</div>
 </header>
+
 <main>
-<div class="card">
-<h2>🌲 Svět skrývá poklady</h2>
-<p>Vydej se na výpravu, fotografuj skutečný svět a získávej fantasy relikvie.</p>
-</div>
+  <section class="panel">
+    <div class="row">
+      <div>
+        <div class="level" id="playerTitle">POUTNÍK · LEVEL 1</div>
+        <div id="xpText">0 / 100 XP</div>
+      </div>
+      <div style="font-size:34px">🧙</div>
+    </div>
+    <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
 
-<div class="card stats">
-<div><strong id="level">1</strong><small>ÚROVEŇ</small></div>
-<div><strong id="xp">0</strong><small>XP</small></div>
-<div><strong id="count">0</strong><small>RELIKVIÍ</small></div>
-</div>
+    <div class="stats">
+      <div class="stat"><strong id="levelStat">1</strong><small>LEVEL</small></div>
+      <div class="stat"><strong id="relicStat">0</strong><small>RELIKVIÍ</small></div>
+      <div class="stat"><strong id="distanceStat">0 m</strong><small>CESTA</small></div>
+    </div>
+  </section>
 
-<nav>
-<button class="active" onclick="showPage('quests',this)">Výpravy</button>
-<button onclick="showPage('collection',this)">Sbírka</button>
-<button onclick="showPage('profile',this)">Profil</button>
-</nav>
+  <section class="panel">
+    <h2 class="section-title">🗺️ Mapa výpravy</h2>
+    <div id="map"></div>
+    <div class="status" id="gpsStatus">
+      GPS není spuštěná. Zapni ji a povol přístup k poloze.
+    </div>
+    <div class="row">
+      <button class="primary" id="gpsButton" onclick="startGPS()">📍 Spustit GPS</button>
+      <button class="secondary" onclick="centerMap()">Moje poloha</button>
+    </div>
+    <div class="map-note">
+      Nová relikvie se objeví po přibližně 100 metrech pohybu.
+      Pro získání musíš být do 80 metrů od jejího místa.
+      Pohybuj se pouze na bezpečných a veřejně přístupných místech.
+    </div>
+  </section>
 
-<section id="quests" class="page active">
-<div class="card">
-<h2>První výprava</h2>
-<p>Vyber úkol, najdi odpovídající objekt a vyfotografuj ho.</p>
-</div>
-<div id="questsList"></div>
+  <section class="panel">
+    <h2 class="section-title">🎒 Inventář</h2>
+    <div id="inventory">
+      <div class="status">Zatím nemáš žádné relikvie. Vydej se na první výpravu!</div>
+    </div>
+  </section>
 
-<div class="card">
-<h2>📷 Fotoaparát</h2>
-<p id="selected">Nejdříve vyber výpravu.</p>
-<input id="photo" type="file" accept="image/*" capture="environment">
-<img id="preview" hidden>
-<button style="width:100%;margin-top:12px" id="claim" disabled onclick="claim()">Získat relikvii</button>
-<p><small>Fotografie slouží jako doklad tvého nálezu. Prototyp zatím neověřuje obsah automaticky.</small></p>
-</div>
-</section>
-
-<section id="collection" class="page">
-<div class="card">
-<h2>🏆 Moje kronika</h2>
-<div class="items" id="items"></div>
-</div>
-</section>
-
-<section id="profile" class="page">
-<div class="card">
-<h2>🧙 Profil objevitele</h2>
-<p>Úroveň: <b id="pLevel">1</b></p>
-<p>Zkušenosti: <b id="pXp">0</b></p>
-<p>Titul: <b id="rank">Poutník</b></p>
-<button onclick="resetGame()">Resetovat hru</button>
-</div>
-</section>
+  <section class="panel">
+    <h2 class="section-title">📜 Pravidla výpravy</h2>
+    <div class="status">
+      • Každých přibližně 100 metrů se může objevit nová relikvie.<br>
+      • Klikni na symbol relikvie na mapě.<br>
+      • Splň runovou minihru a získej odměnu.<br>
+      • Sbírej XP a odemykej další úrovně.<br>
+      • Tvůj postup se ukládá v tomto zařízení.
+    </div>
+  </section>
 </main>
 
+<div id="modal">
+  <div class="modal-card">
+    <div style="font-size:38px" id="relicIcon">💎</div>
+    <h2 id="challengeTitle" style="color:var(--gold)">Runová zkouška</h2>
+    <p id="challengeText">Najdi správnou runu.</p>
+    <div class="rune-grid" id="runeGrid"></div>
+    <div id="message"></div>
+    <button class="secondary" onclick="closeModal()">Zavřít</button>
+  </div>
+</div>
+
+<footer>
+  RELIC HUNTERS · Verze 0.1 · Herní prototyp
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-const quests=[
-["Kámen zapomenutých králů","Najdi zajímavý kámen.","🪨",35],
-["Kořeny pradávného lesa","Vyfoť strom nebo kořeny.","🌳",40],
-["Slza vodního ducha","Najdi vodní hladinu.","💧",40],
-["Trůn lesního krále","Vyfoť mech nebo pařez.","🍃",45],
-["Dračí dráp","Najdi zvláštní větev.","🪵",45],
-["Světlo starých mágů","Zachyť sluneční paprsky.","☀️",50],
-["Pečeť podzimu","Vyfoť zajímavý list.","🍂",30],
-["Brána jiného světa","Najdi cestu nebo most.","🌉",50],
-["Ztracené království","Vyfoť zajímavou krajinu.","🏞️",55],
-["Paměť starých časů","Vyfoť zajímavou veřejnou stavbu.","🏛️",60]
+const SAVE_KEY = "relicHunters_v01";
+
+let saved = {};
+try {
+  saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+} catch(e) {
+  saved = {};
+}
+
+let xp = Number(saved.xp) || 0;
+let level = Number(saved.level) || 1;
+let inventory = Array.isArray(saved.inventory) ? saved.inventory : [];
+let totalDistance = Number(saved.totalDistance) || 0;
+
+let map;
+let playerMarker = null;
+let accuracyCircle = null;
+let watchId = null;
+let currentPosition = null;
+let lastSpawnPosition = null;
+let relics = [];
+let activeRelic = null;
+let gpsRunning = false;
+
+const runes = ["ᚠ","ᚢ","ᚦ","ᚨ","ᚱ","ᚲ","ᛉ","ᛟ","ᛞ"];
+
+const relicTypes = [
+  {name:"Měděný peníz poutníka", icon:"🪙", rarity:"Obyčejná", xp:50, chance:55},
+  {name:"Mechový talisman", icon:"🍀", rarity:"Neobvyklá", xp:100, chance:25},
+  {name:"Runový prsten strážce", icon:"💍", rarity:"Vzácná", xp:250, chance:12},
+  {name:"Krystal ranní rosy", icon:"💎", rarity:"Epická", xp:500, chance:6},
+  {name:"Koruna čtyř větrů", icon:"👑", rarity:"Legendární", xp:1000, chance:1.8},
+  {name:"Slza dračího měsíce", icon:"🌙", rarity:"Mýtická", xp:2500, chance:0.2}
 ];
 
-const relics=[
-["Měděný peníz","common","🪙"],
-["Kámen štěstí","common","🪨"],
-["List starého dubu","common","🍂"],
-["Stříbrný přívěsek","uncommon","📿"],
-["Klíč zapomenuté brány","uncommon","🗝️"],
-["Runový prsten","rare","💍"],
-["Krystal ranní rosy","rare","💎"],
-["Srdce prastarého lesa","epic","🌲"],
-["Kompas ztracených cest","epic","🧭"],
-["Koruna čtyř větrů","legendary","👑"],
-["Slza dračího měsíce","mythic","🌙"]
-];
-
-let game=JSON.parse(localStorage.getItem("relicHunters")||'{"xp":0,"items":[],"done":[]}');
-let selected=-1,photo="";
-
-function save(){
- try{localStorage.setItem("relicHunters",JSON.stringify(game))}
- catch(e){alert("Úložiště je plné. Zkus menší fotografie.");}
+function xpNeeded() {
+  return 100 + (level - 1) * 50;
 }
 
-function showPage(id,btn){
- document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
- document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
- document.getElementById(id).classList.add("active");
- btn.classList.add("active");
+function titleForLevel() {
+  if (level >= 51) return "LEGENDÁRNÍ OBJEVITEL";
+  if (level >= 36) return "STRÁŽCE ŘÍŠE";
+  if (level >= 21) return "MISTR ARTEFAKTŮ";
+  if (level >= 11) return "LOVEC RELIKVIÍ";
+  if (level >= 6) return "PRŮZKUMNÍK";
+  return "POUTNÍK";
 }
 
-function render(){
- document.getElementById("level").textContent=Math.floor(game.xp/100)+1;
- document.getElementById("xp").textContent=game.xp;
- document.getElementById("count").textContent=game.items.length;
- document.getElementById("pLevel").textContent=Math.floor(game.xp/100)+1;
- document.getElementById("pXp").textContent=game.xp;
- const level=Math.floor(game.xp/100)+1;
- document.getElementById("rank").textContent=
- level>=36?"Strážce říše":level>=21?"Mistr artefaktů":level>=11?"Lovec relikvií":level>=6?"Průzkumník":"Poutník";
-
- document.getElementById("questsList").innerHTML=quests.map((q,i)=>`
- <div class="card quest">
- <span style="font-size:30px">${q[2]}</span>
- <div><b>${q[0]}</b><br><small>${q[1]}</small><br><small>+${q[3]} XP</small></div>
- <button onclick="selectQuest(${i})" ${game.done.includes(i)?"disabled":""}>
- ${game.done.includes(i)?"Hotovo":"Vybrat"}
- </button>
- </div>`).join("");
-
- document.getElementById("items").innerHTML=game.items.length?
- game.items.slice().reverse().map(x=>`
- <div class="item">
- ${x.photo?`<img src="${x.photo}">`:`<div style="font-size:40px">${x.emoji}</div>`}
- <b>${x.name}</b><br>
- <span class="${x.rarity}">${x.rarity}</span>
- </div>`).join(""):"<p>Zatím nemáš žádné relikvie.</p>";
+function saveGame() {
+  const data = {
+    xp,
+    level,
+    inventory,
+    totalDistance
+  };
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) {
+    console.warn("Uložení se nezdařilo.", e);
+  }
 }
 
-function selectQuest(i){
- selected=i;
- document.getElementById("selected").textContent=quests[i][0]+": "+quests[i][1];
- document.getElementById("claim").disabled=!photo;
+function updateUI() {
+  const needed = xpNeeded();
+  document.getElementById("playerTitle").textContent =
+    titleForLevel() + " · LEVEL " + level;
+  document.getElementById("xpText").textContent =
+    xp + " / " + needed + " XP";
+  document.getElementById("xpFill").style.width =
+    Math.min(100, xp / needed * 100) + "%";
+
+  document.getElementById("levelStat").textContent = level;
+  document.getElementById("relicStat").textContent = inventory.length;
+  document.getElementById("distanceStat").textContent =
+    totalDistance < 1000
+      ? Math.round(totalDistance) + " m"
+      : (totalDistance / 1000).toFixed(1) + " km";
+
+  const area = document.getElementById("inventory");
+
+  if (!inventory.length) {
+    area.innerHTML =
+      '<div class="status">Zatím nemáš žádné relikvie. Vydej se na první výpravu!</div>';
+  } else {
+    area.innerHTML = inventory.slice().reverse().map(item => `
+      <div class="inventory-item">
+        <div>
+          <strong>${escapeHTML(item.icon)} ${escapeHTML(item.name)}</strong><br>
+          <span class="rarity">${escapeHTML(item.rarity)}</span>
+        </div>
+        <span>+${Number(item.xp)} XP</span>
+      </div>
+    `).join("");
+  }
 }
 
-document.getElementById("photo").addEventListener("change",e=>{
- const file=e.target.files[0];
- if(!file)return;
- if(!file.type.startsWith("image/"))return alert("Vyber fotografii.");
- const reader=new FileReader();
- reader.onload=()=>{
- const img=new Image();
- img.onload=()=>{
- const canvas=document.createElement("canvas");
- const scale=Math.min(1,900/Math.max(img.width,img.height));
- canvas.width=img.width*scale;
- canvas.height=img.height*scale;
- canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
- photo=canvas.toDataURL("image/jpeg",.65);
- document.getElementById("preview").src=photo;
- document.getElementById("preview").hidden=false;
- document.getElementById("claim").disabled=selected<0;
- };
- img.src=reader.result;
- };
- reader.readAsDataURL(file);
-});
-
-function claim(){
- if(selected<0||!photo)return;
- const q=quests[selected];
- const r=Math.random()*100;
- const rarity=r<55?"common":r<80?"uncommon":r<92?"rare":r<98?"epic":r<99.8?"legendary":"mythic";
- const possible=relics.filter(x=>x[1]===rarity);
- const item=possible.length?possible[Math.floor(Math.random()*possible.length)]:relics[0];
- game.items.push({name:item[0],rarity:item[1],emoji:item[2],photo});
- game.done.push(selected);
- game.xp+=q[3];
- save();render();
- alert("Získal jsi: "+item[0]+"!");
- selected=-1;photo="";
- document.getElementById("preview").hidden=true;
- document.getElementById("photo").value="";
- document.getElementById("claim").disabled=true;
- document.getElementById("selected").textContent="Vyber další výpravu.";
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#039;"
+  })[char]);
 }
 
-function resetGame(){
- if(confirm("Opravdu smazat celou sbírku a postup?")){
- game={xp:0,items:[],done:[]};save();render();
- }
+function addXP(amount) {
+  xp += amount;
+  let leveledUp = false;
+
+  while (xp >= xpNeeded()) {
+    xp -= xpNeeded();
+    level++;
+    leveledUp = true;
+  }
+
+  saveGame();
+  updateUI();
+
+  if (leveledUp) {
+    alert("✨ NOVÁ ÚROVEŇ!\nDosáhl jsi levelu " + level + "!\nTvůj titul: " + titleForLevel());
+  }
 }
-render();
+
+function initMap() {
+  map = L.map("map").setView([49.3, 14.7], 14);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+}
+
+function distanceMeters(a, b) {
+  const R = 6371000;
+  const rad = x => x * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLon = rad(b.lng - a.lng);
+  const lat1 = rad(a.lat);
+  const lat2 = rad(b.lat);
+
+  const x = Math.sin(dLat/2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(dLon/2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function chooseRelic() {
+  let roll = Math.random() * 100;
+  let total = 0;
+
+  for (const relic of relicTypes) {
+    total += relic.chance;
+    if (roll <= total) return relic;
+  }
+
+  return relicTypes[0];
+}
+
+function spawnRelic(position) {
+  if (relics.length >= 8) return;
+
+  const type = chooseRelic();
+  const angle = Math.random() * Math.PI * 2;
+  const offset = 12;
+
+  const lat = position.lat + (Math.cos(angle) * offset) / 111320;
+  const lng = position.lng +
+    (Math.sin(angle) * offset) /
+    (111320 * Math.cos(position.lat * Math.PI / 180));
+
+  const relic = {
+    id: Date.now() + Math.random(),
+    lat,
+    lng,
+    type,
+    marker: null
+  };
+
+  const icon = L.divIcon({
+    className: "",
+    html: `<div style="
+      font-size:29px;
+      text-shadow:0 0 12px #f6d36d;
+      text-align:center;
+      width:38px;
+    ">${type.icon}</div>`,
+    iconSize: [38,38],
+    iconAnchor: [19,19]
+  });
+
+  relic.marker = L.marker([lat,lng], {icon}).addTo(map);
+  relic.marker.bindPopup(
+    `<b>${type.icon} Tajemná relikvie</b><br>${type.rarity}<br><small>Klepni pro prozkoumání</small>`
+  );
+
+  relic.marker.on("click", () => openRelic(relic));
+  relics.push(relic);
+}
+
+function openRelic(relic) {
+  if (!currentPosition) {
+    alert("Nejdříve zapni GPS.");
+    return;
+  }
+
+  const distance = distanceMeters(currentPosition, relic);
+
+  if (distance > 80) {
+    alert("Jsi příliš daleko. K relikvii se můžeš přiblížit na 80 metrů.");
+    return;
+  }
+
+  activeRelic = relic;
+  startMiniGame();
+}
+
+function startMiniGame() {
+  const correct = runes[Math.floor(Math.random() * runes.length)];
+  const choices = [correct];
+
+  while (choices.length < 3) {
+    const candidate = runes[Math.floor(Math.random() * runes.length)];
+    if (!choices.includes(candidate)) choices.push(candidate);
+  }
+
+  choices.sort(() => Math.random() - 0.5);
+
+  document.getElementById("relicIcon").textContent = activeRelic.type.icon;
+  document.getElementById("challengeTitle").textContent = "Runová zkouška";
+  document.getElementById("challengeText").textContent =
+    "Najdi runu: " + correct;
+  document.getElementById("message").textContent = "";
+
+  const grid = document.getElementById("runeGrid");
+  grid.innerHTML = "";
+
+  choices.forEach(rune => {
+    const button = document.createElement("button");
+    button.className = "rune";
+    button.textContent = rune;
+    button.onclick = () => {
+      if (rune === correct) {
+        completeRelic();
+      } else {
+        document.getElementById("message").textContent =
+          "To není správná runa. Zkus to znovu.";
+      }
+    };
+    grid.appendChild(button);
+  });
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+function completeRelic() {
+  if (!activeRelic) return;
+
+  const type = activeRelic.type;
+  const bonus = type.xp;
+
+  inventory.push({
+    name: type.name,
+    icon: type.icon,
+    rarity: type.rarity,
+    xp: bonus,
+    date: new Date().toISOString()
+  });
+
+  if (activeRelic.marker) map.removeLayer(activeRelic.marker);
+  relics = relics.filter(item => item.id !== activeRelic.id);
+
+  activeRelic = null;
+  saveGame();
+  addXP(bonus);
+
+  document.getElementById("message").textContent =
+    "Relikvie získána! +" + bonus + " XP";
+
+  document.getElementById("challengeTitle").textContent = "Relikvie získána!";
+  document.getElementById("challengeText").textContent =
+    "Artefakt byl přidán do tvého inventáře.";
+
+  document.getElementById("runeGrid").innerHTML = "";
+  document.querySelector("#modal .secondary").textContent = "Pokračovat";
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+  document.querySelector("#modal .secondary").textContent = "Zavřít";
+  activeRelic = null;
+}
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    alert("Tento prohlížeč nepodporuje GPS.");
+    return;
+  }
+
+  if (!window.isSecureContext) {
+    alert("GPS vyžaduje zabezpečené připojení HTTPS. Otevři hru přes GitHub Pages.");
+    return;
+  }
+
+  if (gpsRunning) return;
+
+  document.getElementById("gpsStatus").textContent =
+    "Čekám na GPS signál… Povol přístup k poloze.";
+
+  watchId = navigator.geolocation.watchPosition(
+    onPosition,
+    onGPSError,
+    {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 20000
+    }
+  );
+
+  gpsRunning = true;
+  document.getElementById("gpsButton").textContent = "GPS běží";
+  document.getElementById("gpsButton").disabled = true;
+}
+
+function onPosition(position) {
+  const coords = {
+    lat: position.coords.latitude,
+    lng: position.coords.longitude
+  };
+
+  currentPosition = coords;
+
+  if (!playerMarker) {
+    const playerIcon = L.divIcon({
+      className: "",
+      html: '<div style="font-size:32px;text-shadow:0 0 10px #7cff9b">🧙</div>',
+      iconSize: [38,38],
+      iconAnchor: [19,19]
+    });
+
+    playerMarker = L.marker([coords.lat,coords.lng], {
+      icon: playerIcon,
+      zIndexOffset: 1000
+    }).addTo(map).bindPopup("Tvoje postava");
+    map.setView([coords.lat,coords.lng], 17);
+
+    accuracyCircle = L.circle([coords.lat,coords.lng], {
+      radius: position.coords.accuracy || 20,
+      color: "#8da77c",
+      fillOpacity: 0.08
+    }).addTo(map);
+
+    lastSpawnPosition = coords;
+    spawnRelic(coords);
+
+    document.getElementById("gpsStatus").textContent =
+      "GPS aktivní. První relikvie čeká na objevení!";
+    return;
+  }
+
+  playerMarker.setLatLng([coords.lat,coords.lng]);
+
+  if (accuracyCircle) {
+    accuracyCircle.setLatLng([coords.lat,coords.lng]);
+    accuracyCircle.setRadius(position.coords.accuracy || 20);
+  }
+
+  if (lastSpawnPosition) {
+    const moved = distanceMeters(lastSpawnPosition, coords);
+
+    if (moved >= 100) {
+      totalDistance += moved;
+      lastSpawnPosition = coords;
+      spawnRelic(coords);
+      saveGame();
+      updateUI();
+    }
+  }
+
+  document.getElementById("gpsStatus").textContent =
+    "GPS aktivní · Přesnost přibližně " +
+    Math.round(position.coords.accuracy) + " m";
+}
+
+function onGPSError(error) {
+  const messages = {
+    1: "Přístup k poloze byl zamítnut. Povol GPS v nastavení prohlížeče.",
+    2: "Poloha není momentálně dostupná.",
+    3: "Vypršel čas čekání na GPS. Zkus to znovu."
+  };
+
+  document.getElementById("gpsStatus").textContent =
+    messages[error.code] || "Nepodařilo se získat GPS polohu.";
+}
+
+function centerMap() {
+  if (currentPosition) {
+    map.setView([currentPosition.lat,currentPosition.lng], 17);
+  } else {
+    alert("Nejdříve zapni GPS.");
+  }
+}
+
+initMap();
+updateUI();
 </script>
 </body>
 </html>
