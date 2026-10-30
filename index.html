@@ -3,468 +3,1513 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#101a16">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#79bde2">
 <title>RELIC HUNTERS</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 
 <style>
-:root {
-  --bg:#101914; --panel:#1c2b22; --panel2:#26392d;
-  --gold:#e4bd69; --muted:#aab9a9; --white:#f4f0df;
-  --green:#8eb78c; --line:#435b47;
+* {
+  box-sizing: border-box;
 }
-* {box-sizing:border-box}
+
 body {
-  margin:0;background:var(--bg);color:var(--white);
-  font-family:Arial,sans-serif;padding-bottom:78px;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  background: #a9d4e8;
+  color: #29465c;
 }
-button {font:inherit;cursor:pointer}
-header {
-  position:relative;text-align:center;padding:15px 12px 13px;
-  background:linear-gradient(135deg,#14251b,#304832,#17251d);
-  border-bottom:1px solid #98783d;
-  box-shadow:0 5px 20px #0008;
-}
-header h1 {
-  margin:0;color:var(--gold);font-size:23px;
-  letter-spacing:4px;text-shadow:0 0 14px #d9a84b55;
-}
-header small {color:#b8c8ae;letter-spacing:2px;font-size:9px}
-.playerbar {
-  max-width:700px;margin:12px auto 0;padding:10px 12px;
-  background:#101b15d9;border:1px solid #526849;border-radius:12px;
-}
-.playerrow {display:flex;align-items:center;gap:10px}
-.avatar {
-  width:48px;height:48px;display:grid;place-items:center;
-  font-size:29px;border-radius:50%;
-  background:radial-gradient(circle,#526d49,#1a2c20);
-  border:2px solid var(--gold);box-shadow:0 0 14px #d6ae5366;
-}
-.playerinfo {flex:1;text-align:left;min-width:0}
-.playername {font-weight:bold;color:var(--gold);font-size:13px}
-.playerlevel {font-size:11px;color:var(--muted);margin-top:3px}
-.xptext {font-size:10px;color:#d8d4c5;text-align:right}
-.xpbar {height:8px;background:#344437;border-radius:20px;margin-top:8px;overflow:hidden}
-.xpfill {height:100%;width:0;background:linear-gradient(90deg,#a77b35,#ffe19a);transition:width .4s}
-main {max-width:850px;margin:auto;padding:12px}
-.page {display:none}
-.page.active {display:block;animation:fade .25s ease}
-@keyframes fade {from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.panel {
-  background:linear-gradient(145deg,#223329,#19271f);
-  border:1px solid var(--line);border-radius:14px;
-  padding:13px;margin-bottom:12px;box-shadow:0 5px 16px #0003;
-}
-.heading {
-  color:var(--gold);font-size:15px;font-weight:bold;
-  letter-spacing:.7px;margin:0 0 11px;
-}
+
 #map {
-  height:53vh;min-height:330px;max-height:560px;
-  border-radius:10px;border:1px solid #607354;overflow:hidden;
-  background:#25372b;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #b8dce9;
 }
-.leaflet-tile-pane {filter:brightness(.68) saturate(.72) hue-rotate(12deg)}
-.leaflet-control-attribution {font-size:9px!important}
-.mapstatus {
-  color:var(--muted);font-size:11px;line-height:1.5;margin:9px 0;
+
+.top {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
 }
-.actions {display:flex;gap:8px;flex-wrap:wrap}
-.btn {
-  border:1px solid #8e7545;border-radius:9px;padding:11px 13px;
-  background:linear-gradient(135deg,#e5c477,#b58b42);
-  color:#241d11;font-weight:bold;font-size:12px;
+
+.brand, .player {
+  background: #fffdf2;
+  border: 2px solid white;
+  border-radius: 17px;
+  padding: 10px;
+  box-shadow: 0 4px 12px #34566b44;
 }
-.btn.secondary {background:#344c3a;color:#f4f0df;border-color:#5c795b}
-.btn:disabled {opacity:.45}
-.stats {
-  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  margin-top:12px;
+
+.brand {
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
 }
-.stat {background:#142219;border:1px solid #354b39;border-radius:9px;padding:9px;text-align:center}
-.stat strong {display:block;color:var(--gold);font-size:19px}
-.stat small {font-size:9px;color:var(--muted)}
-.locationgrid {display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.location {
-  background:#18271e;border:1px solid #405941;border-radius:10px;
-  padding:11px;text-align:left;
+
+.player {
+  flex: 1;
 }
-.location .symbol {font-size:25px}
-.location strong {display:block;color:#e8d29e;font-size:12px;margin:5px 0}
-.location small {color:var(--muted);font-size:10px;line-height:1.4}
-.relicgrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.reliccard {
-  border:1px solid #52674c;border-radius:12px;padding:12px;
-  background:linear-gradient(145deg,#263a2c,#17241c);
-  text-align:left;min-height:125px;position:relative;overflow:hidden;
+
+.player-name {
+  font-size: 12px;
+  font-weight: bold;
 }
-.reliccard:after {
-  content:"";position:absolute;width:70px;height:70px;border-radius:50%;
-  right:-25px;top:-25px;background:#e7c36a12;
+
+.level {
+  font-size: 10px;
+  color: #7791a0;
+  margin-top: 3px;
 }
-.relicicon {font-size:30px;filter:drop-shadow(0 0 8px #e4bd6980)}
-.relicname {font-size:12px;font-weight:bold;margin:7px 0 4px}
-.rarity {font-size:10px;font-weight:bold}
-.ordinary {color:#c8d0c8}.uncommon {color:#7ad49b}
-.rare {color:#68b7ff}.epic {color:#c68bff}
-.legendary {color:#ffc65e}.mythic {color:#ff7f9a}
-.bottomnav {
-  position:fixed;bottom:0;left:0;right:0;z-index:500;
-  display:grid;grid-template-columns:repeat(4,1fr);
-  background:#142119f5;border-top:1px solid #64794d;
-  padding:7px 4px max(7px,env(safe-area-inset-bottom));
+
+.xp {
+  height: 7px;
+  background: #dce9ec;
+  border-radius: 20px;
+  margin-top: 8px;
+  overflow: hidden;
 }
-.navbtn {
-  border:0;background:none;color:#aab9a9;padding:5px 2px;
-  font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;
+
+.xp-fill {
+  height: 100%;
+  width: 0%;
+  background: #83cf69;
 }
-.navbtn span {font-size:21px}
-.navbtn.active {color:var(--gold)}
-.empty {color:var(--muted);font-size:12px;line-height:1.5;padding:12px;text-align:center}
-.profilehero {text-align:center;padding:16px}
-.bigavatar {
-  margin:auto;width:90px;height:90px;border-radius:50%;
-  display:grid;place-items:center;font-size:53px;
-  background:radial-gradient(circle,#617d51,#1b3021);
-  border:2px solid var(--gold);box-shadow:0 0 25px #e4bd6940;
+
+.tools {
+  position: absolute;
+  z-index: 500;
+  right: 12px;
+  top: 110px;
+  display: grid;
+  gap: 8px;
 }
-.profilehero h2 {color:var(--gold);margin:12px 0 5px}
-.profilehero p {color:var(--muted);font-size:12px}
-.badge {
-  display:inline-block;padding:5px 9px;border:1px solid #8d7448;
-  border-radius:20px;color:var(--gold);font-size:10px;margin:3px;
+
+.tools button {
+  width: 45px;
+  height: 45px;
+  border-radius: 15px;
+  background: white;
+  font-size: 22px;
+  border: 2px solid white;
+  box-shadow: 0 3px 10px #34566b44;
 }
+
+.bottom {
+  position: absolute;
+  z-index: 500;
+  bottom: 83px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.nearby {
+  background: #fffdf2;
+  border-radius: 15px;
+  padding: 10px;
+  box-shadow: 0 3px 10px #34566b44;
+  font-size: 11px;
+}
+
+.nearby small {
+  display: block;
+  color: #8195a1;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.scan {
+  background: #ffdc72;
+  border: 3px solid white;
+  border-radius: 17px;
+  padding: 13px;
+  font-weight: 900;
+  color: #65491c;
+  box-shadow: 0 4px 0 #c89535;
+}
+
+nav {
+  position: absolute;
+  z-index: 600;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fffdf5;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  padding: 8px 5px 24px;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -4px 15px #34566b22;
+}
+
+nav button {
+  background: transparent;
+  color: #78909e;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 5px;
+}
+
+nav button span {
+  display: block;
+  font-size: 23px;
+  margin-bottom: 3px;
+}
+
+nav button.active {
+  color: #3489b9;
+  background: #e5f4fb;
+  border-radius: 12px;
+}
+
+.screen {
+  display: none;
+  position: absolute;
+  z-index: 550;
+  inset: 0;
+  overflow-y: auto;
+  background: #eff7f7;
+  padding: 20px 14px 100px;
+}
+
+.screen.active {
+  display: block;
+}
+
+.screen h2 {
+  color: #31566e;
+}
+
+.card {
+  background: white;
+  border-radius: 17px;
+  padding: 15px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 10px #34566b11;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: #edf6f9;
+  padding: 12px 4px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat b {
+  display: block;
+  font-size: 20px;
+  color: #388bb6;
+}
+
+.stat small {
+  font-size: 9px;
+  color: #8195a1;
+}
+
+.relic-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 9px;
+}
+
+.relic-card {
+  background: white;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+.relic-card span {
+  font-size: 27px;
+}
+
+.relic-card b {
+  display: block;
+  margin-top: 6px;
+}
+
+.back {
+  background: white;
+  padding: 9px 14px;
+  border-radius: 12px;
+  color: #426b83;
+  font-weight: bold;
+}
+
 #modal {
-  display:none;position:fixed;inset:0;z-index:1000;
-  background:#050a07eF;align-items:center;justify-content:center;padding:18px;
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  background: #1d344d99;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-.modalcard {
-  width:100%;max-width:390px;padding:22px;text-align:center;
-  background:linear-gradient(145deg,#293d2e,#14221a);
-  border:1px solid var(--gold);border-radius:17px;
-  box-shadow:0 0 35px #000b;
+
+#modal.show {
+  display: flex;
 }
-.modalicon {font-size:52px;filter:drop-shadow(0 0 12px #e6c16b)}
-.modalcard h2 {color:var(--gold);font-size:19px}
-.modalcard p {color:#d3ddce;font-size:13px;line-height:1.5}
-.runes {display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}
-.rune {
-  padding:16px 5px;background:#344d3b;color:#fff;
-  border:1px solid #718767;border-radius:10px;font-size:28px;
+
+.modal-card {
+  background: #fffdf4;
+  border-radius: 22px;
+  padding: 22px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  border: 3px solid white;
 }
-.rune:active {background:#a27d3d}
-#feedback {min-height:24px;color:var(--gold);font-size:12px}
-.reward {font-size:13px;color:#f4d58b;line-height:1.6}
-footer {text-align:center;color:#718274;font-size:10px;padding:14px}
-@media(min-width:650px) {
-  main {padding:18px}
-  .relicgrid {grid-template-columns:repeat(3,1fr)}
+
+.modal-icon {
+  font-size: 55px;
+}
+
+.runes {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 9px;
+  margin: 15px 0;
+}
+
+.runes button {
+  background: #e4f3f8;
+  border: 2px solid #c7e2ed;
+  border-radius: 13px;
+  padding: 12px;
+  font-size: 27px;
+}
+
+#feedback {
+  font-size: 12px;
+  font-weight: bold;
+  min-height: 25px;
+}
+
+.player-pin {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid white;
+  background: #62b9e8;
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+}
+
+.relic-pin {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid white;
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+  box-shadow: 0 3px 9px #34566b55;
+}
+
+.leaflet-div-icon {
+  background: transparent;
+  border: 0;
 }
 </style>
 </head>
 
 <body>
-<header>
-  <h1>RELIC HUNTERS</h1>
-  <small>THE WORLD OF FORGOTTEN ARTIFACTS</small>
-  <div class="playerbar">
-    <div class="playerrow">
-      <div class="avatar">🧙</div>
-      <div class="playerinfo">
-        <div class="playername" id="topTitle">POUTNÍK</div>
-        <div class="playerlevel" id="topLevel">Úroveň 1</div>
-      </div>
-      <div class="xptext" id="xpText">0 / 100 XP</div>
-    </div>
-    <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
-  </div>
-</header>
 
-<main>
-  <section class="page active" id="page-map">
-    <div class="panel">
-      <h3 class="heading">🗺️ SVĚT OBJEVITELŮ</h3>
-      <div id="map"></div>
-      <div class="mapstatus" id="gpsStatus">
-        Tvá výprava ještě nezačala. Zapni GPS a vydej se objevovat svět.
-      </div>
-      <div class="actions">
-        <button class="btn" id="gpsButton" onclick="startGPS()">📍 Spustit GPS</button>
-        <button class="btn secondary" onclick="centerMap()">◎ Moje poloha</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><strong id="statLevel">1</strong><small>LEVEL</small></div>
-        <div class="stat"><strong id="statRelics">0</strong><small>RELIKVIÍ</small></div>
-        <div class="stat"><strong id="statDistance">0 m</strong><small>VZDÁLENOST</small></div>
-      </div>
-    </div>
+<div id="map"></div>
 
-    <div class="panel">
-      <h3 class="heading">🌲 TAJEMNÁ MÍSTA</h3>
-      <div class="locationgrid">
-        <div class="location"><div class="symbol">🌳</div><strong>Prastarý les</strong><small>Místo, kde se ukrývají lesní artefakty.</small></div>
-        <div class="location"><div class="symbol">🏚️</div><strong>Zapomenuté ruiny</strong><small>Staré příběhy a vzácné relikvie.</small></div>
-        <div class="location"><div class="symbol">💧</div><strong>Magický pramen</strong><small>Vodní relikvie a runové zkoušky.</small></div>
-        <div class="location"><div class="symbol">🗿</div><strong>Kamenná svatyně</strong><small>Výzvy pro zkušené průzkumníky.</small></div>
-      </div>
-      <p class="mapstatus">Tato místa jsou zatím herní typy lokací. V další verzi je napojíme na skutečné objekty v mapových datech.</p>
-    </div>
-  </section>
+<div class="top" id="mapTop">
+  <div class="brand">⚔ RELIC HUNTERS</div>
 
-  <section class="page" id="page-inventory">
-    <div class="panel">
-      <h3 class="heading">🎒 TVOJE SBÍRKA RELIKVIÍ</h3>
-      <div class="actions" style="margin-bottom:12px">
-        <button class="btn secondary" onclick="setFilter('all')">Vše</button>
-        <button class="btn secondary" onclick="setFilter('rare')">Vzácné+</button>
-        <button class="btn secondary" onclick="setFilter('legendary')">Legendární+</button>
-      </div>
-      <div class="relicgrid" id="inventoryGrid"></div>
+  <div class="player">
+    <div class="player-name" id="playerName">POUTNÍK</div>
+    <div class="level" id="level">Úroveň 1 · 0 XP</div>
+    <div class="xp">
+      <div class="xp-fill" id="xpFill"></div>
     </div>
-  </section>
-
-  <section class="page" id="page-quests">
-    <div class="panel">
-      <h3 class="heading">📜 VÝPRAVY A ÚKOLY</h3>
-      <div class="location">
-        <div class="symbol">🔮</div>
-        <strong>Runový učedník</strong>
-        <small>Najdi relikvii na mapě a vyřeš runovou hádanku.</small>
-        <div style="margin-top:10px"><span class="badge">50–2500 XP</span></div>
-      </div>
-      <div class="location" style="margin-top:9px">
-        <div class="symbol">🧭</div>
-        <strong>Putování světem</strong>
-        <small>Vydej se na bezpečnou procházku a objevuj nová místa.</small>
-        <div style="margin-top:10px"><span class="badge">XP za relikvie</span></div>
-      </div>
-      <div class="location" style="margin-top:9px">
-        <div class="symbol">🏆</div>
-        <strong>Sběratelská výzva</strong>
-        <small>Postupně objevuj všechny druhy vzácností.</small>
-        <div style="margin-top:10px"><span class="badge">Sbírka artefaktů</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="page" id="page-profile">
-    <div class="panel profilehero">
-      <div class="bigavatar">🧙</div>
-      <h2 id="profileTitle">Poutník</h2>
-      <p id="profileLevel">Úroveň 1 · Začátek výpravy</p>
-      <div><span class="badge">Lovec relikvií</span><span class="badge">Průzkumník světa</span></div>
-    </div>
-    <div class="panel">
-      <h3 class="heading">📊 STATISTIKY HRÁČE</h3>
-      <div class="inventory-item"><span>Celkem XP</span><strong id="totalXP">0</strong></div>
-      <div class="inventory-item"><span>Získané relikvie</span><strong id="profileRelics">0</strong></div>
-      <div class="inventory-item"><span>Uražená vzdálenost</span><strong id="profileDistance">0 m</strong></div>
-      <div class="inventory-item"><span>Nejvzácnější nález</span><strong id="bestRelic">—</strong></div>
-    </div>
-    <div class="panel">
-      <h3 class="heading">⚙️ NASTAVENÍ</h3>
-      <p class="mapstatus">Postup se ukládá v tomto zařízení a prohlížeči.</p>
-      <button class="btn secondary" onclick="exportSave()">Exportovat postup</button>
-      <button class="btn secondary" onclick="importSave()">Importovat postup</button>
-      <p class="mapstatus">Reset smaže uložený herní postup.</p>
-      <button class="btn secondary" onclick="resetGame()">Resetovat hru</button>
-    </div>
-  </section>
-</main>
-
-<nav class="bottomnav">
-  <button class="navbtn active" data-page="map" onclick="showPage('map',this)"><span>🗺️</span>Mapa</button>
-  <button class="navbtn" data-page="inventory" onclick="showPage('inventory',this)"><span>🎒</span>Inventář</button>
-  <button class="navbtn" data-page="quests" onclick="showPage('quests',this)"><span>📜</span>Výpravy</button>
-  <button class="navbtn" data-page="profile" onclick="showPage('profile',this)"><span>🧙</span>Profil</button>
-</nav>
-
-<div id="modal">
-  <div class="modalcard">
-    <div class="modalicon" id="modalIcon">💎</div>
-    <h2 id="modalTitle">Tajemná relikvie</h2>
-    <p id="modalDescription">Před tebou leží zapomenutý artefakt.</p>
-    <div id="challengeArea"></div>
-    <div id="feedback"></div>
-    <button class="btn secondary" onclick="closeModal()">Zavřít</button>
   </div>
 </div>
 
-<footer>RELIC HUNTERS · VERZE 0.2 · TVŮJ SVĚT, TVOJE VÝPRAVA</footer>
+<div class="tools" id="mapTools">
+  <button id="locate">◎</button>
+  <button id="zoomIn">＋</button>
+  <button id="zoomOut">－</button>
+</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="bottom" id="mapBottom">
+  <div class="nearby">
+    <small>V OKOLÍ</small>
+    <b id="nearby">Hledám relikvie…</b>
+    <div id="gpsStatus">Čekám na GPS</div>
+  </div>
+
+  <button class="scan" id="scan">✦ PROZKOUMAT</button>
+</div>
+
+<nav id="navigation">
+  <button class="active" data-page="map">
+    <span>🗺️</span>MAPA
+  </button>
+  <button data-page="inventory">
+    <span>🎒</span>SBÍRKA
+  </button>
+  <button data-page="quests">
+    <span>📜</span>VÝPRAVY
+  </button>
+  <button data-page="profile">
+    <span>🧙</span>PROFIL
+  </button>
+</nav>
+
+<section class="screen" id="inventory">
+  <h2>🎒 Moje sbírka</h2>
+  <button class="back" data-back>Zpět na mapu</button>
+  <div class="card">
+    <div class="stat-grid">
+      <div class="stat">
+        <b id="invCount">0</b>
+        <small>RELIKVIÍ</small>
+      </div>
+      <div class="stat">
+        <b id="invRare">0</b>
+        <small>VZÁCNÉ</small>
+      </div>
+      <div class="stat">
+        <b id="invTypes">0/6</b>
+        <small>DRUHŮ</small>
+      </div>
+    </div>
+  </div>
+  <div class="relic-grid" id="inventoryGrid"></div>
+</section>
+
+<section class="screen" id="quests">
+  <h2>📜 Výpravy</h2>
+  <button class="back" data-back>Zpět na mapu</button>
+  <div class="card">
+    <h3>🔮 První objev</h3>
+    Najdi svou první relikvii.
+  </div>
+  <div class="card">
+    <h3>🧭 Tulák</h3>
+    Prozkoumej okolí a vydej se na cestu.
+  </div>
+  <div class="card">
+    <h3>💎 Sběratel</h3>
+    Najdi vzácný artefakt.
+  </div>
+</section>
+
+<section class="screen" id="profile">
+  <h2>🧙 Profil poutníka</h2>
+  <button class="back" data-back>Zpět na mapu</button>
+  <div class="card">
+    <h3 id="profileName">Poutník</h3>
+    <p id="profileLevel">Úroveň 1</p>
+    <div class="stat-grid">
+      <div class="stat"><b id="totalXP">0</b><small>XP</small></div>
+      <div class="stat"><b id="profileRelics">0</b><small>NÁLEZY</small></div>
+      <div class="stat"><b id="distance">0 m</b><small>CESTA</small></div>
+    </div>
+  </div>
+</section>
+
+<div id="modal">
+  <div class="modal-card">
+    <div class="modal-icon" id="modalIcon">💎</div>
+    <h2 id="modalTitle">Tajemná relikvie</h2>
+    <p id="modalDesc">Rozlušti runy a získej artefakt.</p>
+    <div id="challengeArea"></div>
+    <div id="feedback"></div>
+    <button class="back" id="closeModal">Zavřít</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
 <script>
-const KEY = "relicHunters_v02";
+"use strict";
+
+// ===================================
+// RELIC HUNTERS 0.3 – MAP ENGINE
+// ===================================
+
+const SAVE_KEY = "relicHunters_v03";
+
+const relicTypes = [
+  {name:"Měděný peníz",icon:"🪙",rarity:"Obyčejná",xp:50,color:"#9aa8ad",weight:54},
+  {name:"Mechový talisman",icon:"🍀",rarity:"Neobvyklá",xp:100,color:"#55b879",weight:25},
+  {name:"Runový prsten",icon:"💍",rarity:"Vzácná",xp:250,color:"#55a9dc",weight:12},
+  {name:"Krystal rosy",icon:"💎",rarity:"Epická",xp:500,color:"#a879d4",weight:6},
+  {name:"Koruna větrů",icon:"👑",rarity:"Legendární",xp:1000,color:"#e4b84c",weight:2.5},
+  {name:"Slza dračího měsíce",icon:"🌙",rarity:"Mýtická",xp:2500,color:"#dc719a",weight:.5}
+];
+
 const defaults = {
-  xp:0, level:1, totalXP:0, distance:0,
-  inventory:[], discovered:0
+  xp:0,
+  level:1,
+  totalXP:0,
+  distance:0,
+  inventory:[]
 };
-let data;
+
+let gameData;
+
 try {
-  data = {...defaults,...JSON.parse(localStorage.getItem(KEY)||"{}")};
-  if (!Array.isArray(data.inventory)) data.inventory=[];
-} catch(e) { data={...defaults}; }
+  gameData = {
+    ...defaults,
+    ...JSON.parse(localStorage.getItem(SAVE_KEY) || "{}")
+  };
 
-const types = [
- {name:"Měděný peníz poutníka",icon:"🪙",rarity:"Obyčejná",class:"ordinary",xp:50,weight:55},
- {name:"Mechový talisman",icon:"🍀",rarity:"Neobvyklá",class:"uncommon",xp:100,weight:25},
- {name:"Runový prsten strážce",icon:"💍",rarity:"Vzácná",class:"rare",xp:250,weight:12},
- {name:"Krystal ranní rosy",icon:"💎",rarity:"Epická",class:"epic",xp:500,weight:6},
- {name:"Koruna čtyř větrů",icon:"👑",rarity:"Legendární",class:"legendary",xp:1000,weight:1.8},
- {name:"Slza dračího měsíce",icon:"🌙",rarity:"Mýtická",class:"mythic",xp:2500,weight:.2}
-];
-
-const titles = [
- {level:1,title:"Poutník"},
- {level:6,title:"Průzkumník"},
- {level:11,title:"Lovec relikvií"},
- {level:21,title:"Mistr artefaktů"},
- {level:36,title:"Strážce říše"},
- {level:51,title:"Legendární objevitel"}
-];
-
-const runeSymbols=["ᚠ","ᚢ","ᚦ","ᚨ","ᚱ","ᚲ","ᛉ","ᛟ","ᛞ"];
-let map, playerMarker, accuracyCircle, watchId;
-let position=null, previousPosition=null, lastSpawn=null;
-let gpsStarted=false, activeRelic=null, relicMarkers=[];
-let filter="all", challengeAnswer=null;
-
-function save() {
-  try { localStorage.setItem(KEY,JSON.stringify(data)); }
-  catch(e) { alert("Paměť prohlížeče je plná. Zkus exportovat postup."); }
-}
-function neededXP(level=data.level) { return 100+(level-1)*50; }
-function title() {
-  let t=titles[0].title;
-  for(const item of titles) if(data.level>=item.level) t=item.title;
-  return t;
-}
-function addXP(amount) {
-  data.xp+=amount;
-  data.totalXP+=amount;
-  let levels=[];
-  while(data.xp>=neededXP()) {
-    data.xp-=neededXP();
-    data.level++;
-    levels.push(data.level);
+  if (!Array.isArray(gameData.inventory)) {
+    gameData.inventory = [];
   }
-  save(); render();
-  if(levels.length) setTimeout(()=>alert("✨ NOVÁ ÚROVEŇ!\nDosáhl jsi úrovně "+data.level+"!\nTvůj titul: "+title()),150);
+} catch(e) {
+  gameData = {...defaults};
 }
-function render() {
-  const need=neededXP();
-  document.getElementById("topTitle").textContent=title().toUpperCase();
-  document.getElementById("topLevel").textContent="Úroveň "+data.level;
-  document.getElementById("xpText").textContent=data.xp+" / "+need+" XP";
-  document.getElementById("xpFill").style.width=Math.min(100,data.xp/need*100)+"%";
-  document.getElementById("statLevel").textContent=data.level;
-  document.getElementById("statRelics").textContent=data.inventory.length;
-  document.getElementById("statDistance").textContent=formatDistance(data.distance);
-  document.getElementById("profileTitle").textContent=title();
-  document.getElementById("profileLevel").textContent="Úroveň "+data.level+" · Dobrodružství pokračuje";
-  document.getElementById("totalXP").textContent=data.totalXP;
-  document.getElementById("profileRelics").textContent=data.inventory.length;
-  document.getElementById("profileDistance").textContent=formatDistance(data.distance);
-  const best=data.inventory.slice().sort((a,b)=>b.xp-a.xp)[0];
-  document.getElementById("bestRelic").textContent=best?best.rarity:"—";
-  renderInventory();
-}
-function formatDistance(m) {
-  return m<1000?Math.round(m)+" m":(m/1000).toFixed(2)+" km";
-}
-function showPage(name,button) {
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById("page-"+name).classList.add("active");
-  document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("active"));
-  button.classList.add("active");
-  if(name==="map") setTimeout(()=>map.invalidateSize(),100);
-}
-function renderInventory() {
-  const grid=document.getElementById("inventoryGrid");
-  let list=data.inventory.slice().reverse();
-  if(filter==="rare") list=list.filter(x=>["Vzácná","Epická","Legendární","Mýtická"].includes(x.rarity));
-  if(filter==="legendary") list=list.filter(x=>["Legendární","Mýtická"].includes(x.rarity));
-  if(!list.length) {
-    grid.innerHTML='<div class="empty" style="grid-column:1/-1">Tvoje sbírka zatím čeká na první artefakt. Vydej se na mapu!</div>';
+
+let gameMap = null;
+let playerMarker = null;
+let playerPosition = null;
+let previousPosition = null;
+let accuracyCircle = null;
+let gpsWatch = null;
+let relicMarkers = [];
+let activeRelic = null;
+
+// ===================================
+// MAPA
+// ===================================
+
+function initGameMap() {
+
+  if (typeof L === "undefined") {
+    document.getElementById("gpsStatus").textContent =
+      "Mapový systém se nenačetl.";
     return;
   }
-  grid.innerHTML=list.map(item=>{
-    const cls=types.find(t=>t.rarity===item.rarity)?.class||"ordinary";
-    return `<div class="reliccard">
-      <div class="relicicon">${safe(item.icon)}</div>
-      <div class="relicname">${safe(item.name)}</div>
-      <div class="rarity ${cls}">${safe(item.rarity)}</div>
-      <div style="font-size:10px;color:#b8c8b5;margin-top:8px">Zisk: ${Number(item.xp)} XP</div>
-    </div>`;
-  }).join("");
-}
-function setFilter(value) {filter=value;renderInventory();}
-function safe(value) {
-  return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  gameMap = L.map("map", {
+    zoomControl:false
+  }).setView([49.3,14.7],14);
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom:19,
+      attribution:"© OpenStreetMap contributors"
+    }
+  ).addTo(gameMap);
+
+  setTimeout(() => {
+    gameMap.invalidateSize(true);
+  },300);
 }
 
-function initMap() {
-  map=L.map("map",{zoomControl:true}).setView([49.3,14.7],14);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-    maxZoom:19,
-    attribution:'&copy; OpenStreetMap contributors'
-  }).addTo(map);
-}
-function meters(a,b) {
-  const R=6371000, rad=x=>x*Math.PI/180;
-  const dLat=rad(b.lat-a.lat),dLon=rad(b.lng-a.lng);
-  const q=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
-  return 2*R*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
-}
-function chooseType() {
-  let r=Math.random()*100,total=0;
-  for(const t of types) {total+=t.weight;if(r<=total)return t;}
-  return types[0];
-}
-function markerIcon(symbol,kind) {
+// ===================================
+// IKONA HRÁČE
+// ===================================
+
+function createPlayerIcon() {
+
   return L.divIcon({
     className:"",
-    html:`<div class="${kind}">${symbol}</div>`,
-    iconSize:[48,52],iconAnchor:[24,26]
+    html:'<div class="player-pin">🧙</div>',
+    iconSize:[42,42],
+    iconAnchor:[21,21]
   });
+
 }
-function spawnRelic(origin) {
-  if(relicMarkers.length>=8) return;
-  const type=chooseType();
-  const angle=Math.random()*Math.PI*2;
-  const offset=15+Math.random()*35;
-  const lat=origin.lat+Math.cos(angle)*offset/111320;
-  const lng=origin.lng+Math.sin(angle)*offset/(111320*Math.cos(origin.lat*Math.PI/180));
-  const relic={id:Date.now()+Math.random(),lat,lng,type,marker:null};
-  const icon=L.divIcon({
+
+// ===================================
+// IKONY RELIKVIÍ
+// ===================================
+
+function createRelicIcon(type) {
+
+  return L.divIcon({
     className:"",
-    html:`<div style="position:relative;width:46px;height:50px;display:grid;place-items:center">
-      <div style="position:absolute;width:42px;height:42px;border:1px solid ${rarityColor(type)};border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 14px ${rarityColor(type)}"></div>
-      <div style="font-size:29px;position:relative;filter:drop-shadow(0 0 7px ${rarityColor(type)})">${type.icon}</div>
-    </div>
-    <style>@keyframes pulse{0%{transform:scale(.65);opacity:.8}100%{transform:scale(1.4);opacity:0}}</style>`,
-    iconSize:[46,50],iconAnchor:[23,25]
+    html:`
+      <div class="relic-pin"
+        style="background:${type.color}">
+        ${type.icon}
+      </div>
+    `,
+    iconSize:[42,42],
+    iconAnchor:[21,21]
   });
-  relic.marker=L.marker([lat,lng],{icon}).addTo(map);
-  relic.marker.bindPopup("✨ Neznámá relikvie<br>Klepni na symbol pro průzkum");
-  relic.marker.on("click",()=>openRelic(relic));
-  relicMarkers.push(relic);
-  data.discovered++;
-  save();
+
 }
-function rarityColor(t) {
-  return ({ordinary:"#c8d0c8",uncommon:"#7ad49b",rare:"#68b7ff",epic:"#c68bff",legendary:"#ffc65e",mythic:"#ff7f9a"})[t.class];
+
+// ===================================
+// VZDÁLENOST
+// ===================================
+
+function calculateDistance(a,b) {
+
+  const R = 6371000;
+
+  const rad = x => x * Math.PI / 180;
+
+  const dLat = rad(b.lat-a.lat);
+  const dLng = rad(b.lng-a.lng);
+
+  const q =
+    Math.sin(dLat/2)**2 +
+    Math.cos(rad(a.lat)) *
+    Math.cos(rad(b.lat)) *
+    Math.sin(dLng/2)**2;
+
+  return 2 * R * Math.atan2(
+    Math.sqrt(q),
+    Math.sqrt(1-q)
+  );
 }
-function openRelic(relic) {
-  if(!position) {alert("Nejdříve zapni GPS.");return;}
-  if(meters(position,relic)>80) {
-    alert("K této relikvii jsi zatím příliš daleko. Přibliž se na 80 metrů.");
+
+// ===================================
+// NÁHODNÁ VZÁCNOST
+// ===================================
+
+function getRandomRelic() {
+
+  let roll = Math.random()*100;
+  let sum = 0;
+
+  for (const type of relicTypes) {
+
+    sum += type.weight;
+
+    if (roll <= sum) {
+      return type;
+    }
+
+  }
+
+  return relicTypes[0];
+}
+
+// ===================================
+// GENEROVÁNÍ RELIKVIÍ
+// ===================================
+
+function spawnRelics(center,count=1) {
+
+  if (!gameMap || !center) return;
+
+  for (let i=0;i<count;i++) {
+
+    if (relicMarkers.length >= 9) return;
+
+    const type = getRandomRelic();
+
+    const angle = Math.random()*Math.PI*2;
+    const meters = 90 + Math.random()*180;
+
+    const lat =
+      center.lat +
+      Math.cos(angle)*meters/111320;
+
+    const lng =
+      center.lng +
+      Math.sin(angle)*meters /
+      (111320*Math.cos(center.lat*Math.PI/180));
+
+    const relic = {
+      id:Date.now()+Math.random(),
+      lat,
+      lng,
+      type,
+      marker:null
+    };
+
+    relic.marker = L.marker(
+      [lat,lng],
+      {icon:createRelicIcon(type)}
+    ).addTo(gameMap);
+
+    relic.marker.on("click",() => {
+      selectRelic(relic);
+    });
+
+    relicMarkers.push(relic);
+
+  }
+
+  updateGameDisplay();
+}
+
+// ===================================
+// GPS
+// ===================================
+
+function updatePlayerPosition(position) {
+
+  const p = {
+    lat:position.coords.latitude,
+    lng:position.coords.longitude,
+    accuracy:position.coords.accuracy || 0
+  };
+
+  playerPosition = p;
+
+  if (previousPosition) {
+
+    const meters = calculateDistance(
+      previousPosition,
+      p
+    );
+
+    if (meters > 5 && meters < 100) {
+      gameData.distance += meters;
+      saveGame();
+    }
+
+  }
+
+  previousPosition = p;
+
+  if (!playerMarker) {
+
+    playerMarker = L.marker(
+      [p.lat,p.lng],
+      {icon:createPlayerIcon(),zIndexOffset:1000}
+    ).addTo(gameMap);
+
+  } else {
+
+    playerMarker.setLatLng([p.lat,p.lng]);
+
+  }
+
+  if (!accuracyCircle) {
+
+    accuracyCircle = L.circle(
+      [p.lat,p.lng],
+      {
+        radius:Math.min(p.accuracy,60),
+        color:"#3c9bd0",
+        fillColor:"#6bc4ef",
+        fillOpacity:.13,
+        weight:1
+      }
+    ).addTo(gameMap);
+
+  } else {
+
+    accuracyCircle.setLatLng([p.lat,p.lng]);
+    accuracyCircle.setRadius(Math.min(p.accuracy,60));
+
+  }
+
+  gameMap.setView(
+    [p.lat,p.lng],
+    Math.max(gameMap.getZoom(),16)
+  );
+
+  document.getElementById("gpsStatus").textContent =
+    "GPS aktivní · přesnost " +
+    Math.round(p.accuracy) + " m";
+
+  if (relicMarkers.length < 5) {
+    spawnRelics(p,5-relicMarkers.length);
+  }
+
+  updateGameDisplay();
+}
+
+function gpsError(error) {
+
+  let message = "GPS se nepodařilo načíst.";
+
+  if (error.code === 1) {
+    message = "Povol přístup k poloze v prohlížeči.";
+  }
+
+  if (error.code === 2) {
+    message = "GPS polohu se nepodařilo zjistit.";
+  }
+
+  if (error.code === 3) {
+    message = "GPS neodpovídá. Zkus to znovu.";
+  }
+
+  document.getElementById("gpsStatus").textContent =
+    message;
+}
+
+function startGPS() {
+
+  if (!navigator.geolocation) {
+    alert("Tento prohlížeč nepodporuje GPS.");
     return;
   }
-  activeRelic=relic;
-  const t=relic.type;
-  document.getElementById("modalIcon").textContent=t.icon;
-  document.getElementById("modalTitle").textContent="Tajemná relikvie";
-  document.getElementById("modalDe
+
+  document.getElementById("gpsStatus").textContent =
+    "Zjišťuji polohu…";
+
+  navigator.geolocation.getCurrentPosition(
+    updatePlayerPosition,
+    gpsError,
+    {
+      enableHighAccuracy:true,
+      timeout:15000,
+      maximumAge:0
+    }
+  );
+
+  if (gpsWatch !== null) {
+    navigator.geolocation.clearWatch(gpsWatch);
+  }
+
+  gpsWatch = navigator.geolocation.watchPosition(
+    updatePlayerPosition,
+    gpsError,
+    {
+      enableHighAccuracy:true,
+      maximumAge:5000,
+      timeout:20000
+    }
+  );
+
+}
+
+// ===================================
+// VÝBĚR RELIKVIE
+// ===================================
+
+function selectRelic(relic) {
+
+  if (!playerPosition) {
+    alert("Nejdřív musíš zapnout GPS.");
+    return;
+  }
+
+  const meters = calculateDistance(
+    playerPosition,
+    relic
+  );
+
+  if (meters > 80) {
+
+    alert(
+      "Přibliž se k relikvii. Je vzdálená " +
+      Math.round(meters) + " metrů."
+    );
+
+    return;
+  }
+
+  activeRelic = relic;
+
+  if (typeof startRelicChallenge === "function") {
+    startRelicChallenge(relic);
+  }
+
+}
+
+// ===================================
+// TLAČÍTKA MAPY
+// ===================================
+
+document.getElementById("locate").onclick = function() {
+
+  if (playerPosition) {
+
+    gameMap.setView(
+      [playerPosition.lat,playerPosition.lng],
+      17
+    );
+
+  } else {
+
+    startGPS();
+
+  }
+
+};
+
+document.getElementById("zoomIn").onclick = function() {
+  if (gameMap) gameMap.zoomIn();
+};
+
+document.getElementById("zoomOut").onclick = function() {
+  if (gameMap) gameMap.zoomOut();
+};
+
+document.getElementById("scan").onclick = function() {
+
+  if (!playerPosition) {
+    startGPS();
+    return;
+  }
+
+  spawnRelics(
+    playerPosition,
+    Math.min(3,9-relicMarkers.length)
+  );
+
+  alert("Prohledal jsi okolí. Hledej značky na mapě.");
+
+};
+
+// ===================================
+// START
+// ===================================
+
+initGameMap();
+startGPS();
+
+</script>
+
+
+<script>
+// ===================================
+// RELIC HUNTERS – GAMEPLAY ENGINE
+// ===================================
+
+// Ukládání postupu
+
+function saveGame() {
+
+  try {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify(gameData)
+    );
+  } catch(e) {
+    console.error("Ukládání se nezdařilo",e);
+  }
+
+}
+
+// ===================================
+// ZKUŠENOSTI A LEVELY
+// ===================================
+
+function requiredXP() {
+
+  return 100 + (gameData.level-1)*50;
+
+}
+
+function getPlayerTitle() {
+
+  if (gameData.level >= 51) return "Legendární objevitel";
+  if (gameData.level >= 36) return "Strážce říše";
+  if (gameData.level >= 21) return "Mistr artefaktů";
+  if (gameData.level >= 11) return "Lovec relikvií";
+  if (gameData.level >= 6) return "Průzkumník";
+
+  return "Poutník";
+
+}
+
+function addXP(amount) {
+
+  gameData.xp += amount;
+  gameData.totalXP += amount;
+
+  let levelUp = false;
+
+  while (gameData.xp >= requiredXP()) {
+
+    gameData.xp -= requiredXP();
+    gameData.level++;
+
+    levelUp = true;
+
+  }
+
+  saveGame();
+  updateGameDisplay();
+
+  if (levelUp) {
+
+    alert(
+      "⭐ NOVÁ ÚROVEŇ!\n\n" +
+      "Dosáhl jsi úrovně " +
+      gameData.level +
+      "!\n\nTvůj titul: " +
+      getPlayerTitle()
+    );
+
+  }
+
+}
+
+// ===================================
+// RUNOVÁ MINIHRA
+// ===================================
+
+const runeSymbols = [
+  "ᚠ","ᚢ","ᚦ","ᚨ","ᚱ",
+  "ᚲ","ᛉ","ᛟ","ᛞ"
+];
+
+let correctRune = null;
+
+function startRelicChallenge(relic) {
+
+  const type = relic.type;
+
+  correctRune =
+    runeSymbols[
+      Math.floor(Math.random()*runeSymbols.length)
+    ];
+
+  const choices = [correctRune];
+
+  while (choices.length < 3) {
+
+    const rune =
+      runeSymbols[
+        Math.floor(Math.random()*runeSymbols.length)
+      ];
+
+    if (!choices.includes(rune)) {
+      choices.push(rune);
+    }
+
+  }
+
+  choices.sort(() => Math.random()-.5);
+
+  document.getElementById("modalIcon").textContent =
+    type.icon;
+
+  document.getElementById("modalTitle").textContent =
+    "Tajemná relikvie";
+
+  document.getElementById("modalDesc").textContent =
+    "Rozlušti runu a získej artefakt: " +
+    type.name;
+
+  const area =
+    document.getElementById("challengeArea");
+
+  area.innerHTML = `
+    <p>Najdi správný symbol:</p>
+
+    <div style="
+      font-size:38px;
+      color:#397c9d;
+      margin:12px;
+      font-weight:bold;
+    ">
+      ${correctRune}
+    </div>
+
+    <div class="runes">
+      ${choices.map(rune => `
+        <button
+          type="button"
+          data-rune="${rune}">
+          ${rune}
+        </button>
+      `).join("")}
+    </div>
+  `;
+
+  document.getElementById("feedback").textContent = "";
+
+  document.getElementById("modal").classList.add("show");
+
+  area.querySelectorAll("button").forEach(button => {
+
+    button.addEventListener("click",function() {
+
+      if (this.dataset.rune === correctRune) {
+
+        collectRelic(relic);
+
+      } else {
+
+        document.getElementById("feedback").textContent =
+          "❌ Špatná runa. Zkus to znovu.";
+
+      }
+
+    });
+
+  });
+
+}
+
+// ===================================
+// ZÍSKÁNÍ RELIKVIE
+// ===================================
+
+function collectRelic(relic) {
+
+  const type = relic.type;
+
+  gameData.inventory.push({
+    name:type.name,
+    rarity:type.rarity,
+    xp:type.xp,
+    icon:type.icon,
+    date:Date.now()
+  });
+
+  relic.marker.remove();
+
+  relicMarkers = relicMarkers.filter(
+    item => item !== relic
+  );
+
+  addXP(type.xp);
+
+  let bonus = "";
+
+  if (gameData.inventory.length === 1) {
+
+    addXP(100);
+    bonus = " + 100 XP za první objev!";
+
+  }
+
+  document.getElementById("modalIcon").textContent =
+    type.icon;
+
+  document.getElementById("modalTitle").textContent =
+    "Relikvie získána!";
+
+  document.getElementById("modalDesc").textContent =
+    type.name;
+
+  document.getElementById("challengeArea").innerHTML = `
+    <div class="card">
+      <h3 style="color:#398e66">
+        ✨ ${type.rarity}
+      </h3>
+      <p>Získáváš ${type.xp} XP${bonus}</p>
+    </div>
+  `;
+
+  document.getElementById("feedback").textContent =
+    "Artefakt byl přidán do sbírky.";
+
+  activeRelic = null;
+
+  saveGame();
+  updateGameDisplay();
+
+}
+
+// ===================================
+// ZAVŘENÍ MINIHry
+// ===================================
+
+document.getElementById("closeModal").onclick = function() {
+
+  document.getElementById("modal").classList.remove("show");
+
+  activeRelic = null;
+
+};
+
+// ===================================
+// INVENTÁŘ
+// ===================================
+
+function renderInventory() {
+
+  const inventory = gameData.inventory;
+
+  document.getElementById("invCount").textContent =
+    inventory.length;
+
+  const rare = inventory.filter(item =>
+    ["Vzácná","Epická","Legendární","Mýtická"]
+    .includes(item.rarity)
+  );
+
+  document.getElementById("invRare").textContent =
+    rare.length;
+
+  const types = new Set(
+    inventory.map(item => item.rarity)
+  );
+
+  document.getElementById("invTypes").textContent =
+    types.size + "/6";
+
+  const grid =
+    document.getElementById("inventoryGrid");
+
+  if (inventory.length === 0) {
+
+    grid.innerHTML = `
+      <div class="card" style="grid-column:1/-1">
+        <h3>🎒 Tvoje sbírka je zatím prázdná.</h3>
+        <p>Najdi první relikvii na mapě!</p>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  grid.innerHTML = inventory
+    .slice()
+    .reverse()
+    .map(item => {
+
+      const icon = item.icon || "💎";
+
+      return `
+        <div class="relic-card">
+          <span>${icon}</span>
+          <b>${escapeText(item.name)}</b>
+          <small>${escapeText(item.rarity)}</small>
+          <small style="display:block">
+            +${Number(item.xp)||0} XP
+          </small>
+        </div>
+      `;
+
+    })
+    .join("");
+
+}
+
+function escapeText(value) {
+
+  return String(value).replace(
+    /[&<>"']/g,
+    character => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[character])
+  );
+
+}
+
+// ===================================
+// PROFIL A STATISTIKY
+// ===================================
+
+function renderProfile() {
+
+  document.getElementById("profileName").textContent =
+    getPlayerTitle();
+
+  document.getElementById("profileLevel").textContent =
+    "Úroveň " + gameData.level;
+
+  document.getElementById("totalXP").textContent =
+    gameData.totalXP;
+
+  document.getElementById("profileRelics").textContent =
+    gameData.inventory.length;
+
+  const meters = gameData.distance || 0;
+
+  document.getElementById("distance").textContent =
+    meters < 1000
+      ? Math.round(meters) + " m"
+      : (meters/1000).toFixed(2) + " km";
+
+}
+
+// ===================================
+// AKTUALIZACE ROZHRANÍ
+// ===================================
+
+function updateGameDisplay() {
+
+  const need = requiredXP();
+
+  const percent = Math.min(
+    100,
+    gameData.xp / need * 100
+  );
+
+  document.getElementById("playerName").textContent =
+    getPlayerTitle().toUpperCase();
+
+  document.getElementById("level").textContent =
+    "Úroveň " + gameData.level +
+    " · " + gameData.xp + " XP";
+
+  document.getElementById("xpFill").style.width =
+    percent + "%";
+
+  document.getElementById("nearby").textContent =
+    relicMarkers.length + " relikvií v okolí";
+
+  renderInventory();
+  renderProfile();
+
+}
+
+// ===================================
+// NAVIGACE
+// ===================================
+
+function openPage(page) {
+
+  document.querySelectorAll(".screen").forEach(screen => {
+    screen.classList.remove("active");
+  });
+
+  const mapVisible = page === "map";
+
+  document.getElementById("mapTop").style.display =
+    mapVisible ? "flex" : "none";
+
+  document.getElementById("mapTools").style.display =
+    mapVisible ? "grid" : "none";
+
+  document.getElementById("mapBottom").style.display =
+    mapVisible ? "flex" : "none";
+
+  if (!mapVisible) {
+
+    document.getElementById(page).classList.add("active");
+
+  }
+
+  document.querySelectorAll("nav button").forEach(button => {
+
+    button.classList.toggle(
+      "active",
+      button.dataset.page === page
+    );
+
+  });
+
+  if (mapVisible && gameMap) {
+
+    setTimeout(() => {
+      gameMap.invalidateSize(true);
+    },150);
+
+  }
+
+}
+
+document.querySelectorAll("nav button").forEach(button => {
+
+  button.addEventListener("click",function() {
+
+    openPage(this.dataset.page);
+
+  });
+
+});
+
+document.querySelectorAll("[data-back]").forEach(button => {
+
+  button.addEventListener("click",function() {
+
+    openPage("map");
+
+  });
+
+});
+
+// ===================================
+// PRVNÍ NAČTENÍ
+// ===================================
+
+updateGameDisplay();
+
+saveGame();
+
+</script>
+
+
+<script>
+// ======================================
+// RELIC HUNTERS – ČÁST 4/4
+// Zálohování, obnova a reset hry
+// ======================================
+
+// Export uložené hry do JSON
+function exportGame() {
+    try {
+        const data = {
+            version: 3,
+            exportedAt: new Date().toISOString(),
+            gameData: gameData
+        };
+
+        const blob = new Blob(
+            [JSON.stringify(data, null, 2)],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "relic-hunters-zaloha.json";
+        link.click();
+
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert("Zálohu se nepodařilo vytvořit.");
+        console.error(error);
+    }
+}
+
+// Import uložené hry
+function importGame() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function() {
+            try {
+                const backup = JSON.parse(reader.result);
+
+                if (!backup.gameData ||
+                    !Array.isArray(backup.gameData.inventory)) {
+                    throw new Error("Neplatná záloha.");
+                }
+
+                if (!confirm("Opravdu chceš obnovit tuto zálohu? Aktuální postup bude nahrazen.")) {
+                    return;
+                }
+
+                localStorage.setItem(
+                    SAVE_KEY,
+                    JSON.stringify(backup.gameData)
+                );
+
+                alert("Záloha byla obnovena. Hra se nyní načte znovu.");
+                location.reload();
+
+            } catch (error) {
+                alert("Soubor není platná záloha RELIC HUNTERS.");
+                console.error(error);
+            }
+        };
+
+        reader.readAsText(file);
+    };
+
+    input.click();
+}
+
+// Reset celé hry
+function resetGame() {
+    const firstConfirm = confirm(
+        "Opravdu chceš začít úplně od začátku? Ztratíš svůj postup a inventář."
+    );
+
+    if (!firstConfirm) return;
+
+    const secondConfirm = confirm(
+        "Poslední potvrzení: opravdu smazat uloženou hru?"
+    );
+
+    if (!secondConfirm) return;
+
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+}
+
+// Přidání nabídky nastavení do profilu
+function addSettingsButtons() {
+    const profile = document.getElementById("profile");
+
+    if (!profile || document.getElementById("gameSettings")) {
+        return;
+    }
+
+    const settings = document.createElement("div");
+    settings.id = "gameSettings";
+    settings.className = "panel";
+    settings.style.marginTop = "20px";
+
+    settings.innerHTML = `
+        <h2>⚙️ NASTAVENÍ HRY</h2>
+
+        <button id="exportButton" class="action-button">
+            📥 ZÁLOHOVAT HRU
+        </button>
+
+        <button id="importButton" class="action-button">
+            📤 OBNOVIT ZÁLOHU
+        </button>
+
+        <button id="resetButton" class="action-button">
+            🔄 NOVÁ HRA
+        </button>
+
+        <p style="font-size:12px;color:#aaa;margin-top:12px;">
+            Postup se ukládá do tohoto zařízení.
+            Doporučujeme pravidelně vytvářet zálohu.
+        </p>
+    `;
+
+    profile.appendChild(settings);
+
+    document.getElementById("exportButton")
+        .addEventListener("click", exportGame);
+
+    document.getElementById("importButton")
+        .addEventListener("click", importGame);
+
+    document.getElementById("resetButton")
+        .addEventListener("click", resetGame);
+}
+
+// Zachycení chyb pro snadnější ladění
+window.addEventListener("error", function(event) {
+    console.error("RELIC HUNTERS chyba:", event.message);
+});
+
+// Kontrola podpory GPS
+function checkGPSAvailability() {
+    if (!navigator.geolocation) {
+        alert("Tvoje zařízení nepodporuje GPS polohu.");
+        return false;
+    }
+
+    return true;
+}
+
+// Zobrazení nastavení
+addSettingsButtons();
+
+// Uložení aktuálního postupu
+saveGame();
+
+console.log("RELIC HUNTERS – verze 0.3 připravena.");
+</script>
+</body>
+</html>
+
+</body>
+</html>
